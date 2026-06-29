@@ -44,7 +44,7 @@ async function bootWallet() {
     const result = await Sphere.init({
       ...providers,
       autoGenerate: true,
-      nametag: "enricher-v2",
+      nametag: "srv-7ph7f875",
       network: "testnet2",
       market: true,
     });

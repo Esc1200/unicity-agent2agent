@@ -8,7 +8,8 @@
     "agent-b": "tsx src/agent-b.ts",
     "demo": "npm run agent-a & sleep 3 && npm run agent-b",
     "build": "tsc",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "postinstall": "node --experimental-strip-types scripts/patch-sdk.js"
   },
   "keywords": [
     "unicity",

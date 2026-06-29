@@ -41,7 +41,7 @@ async function bootWallet() {
     const result = await Sphere.init({
       ...providers,
       autoGenerate: true,
-      nametag: "scout-v2",
+      nametag: "cli-wyirmepy",
       network: "testnet2",
       market: true,
     });
@@ -95,21 +95,22 @@ async function searchMarket(sphere: Sphere): Promise<string | null> {
       return null;
     }
 
+    // Search for the most recent "data-enricher" intent
+    // The market returns results sorted by relevance, we want the latest
     const result = await market.search("data-enricher", {
-      limit: 5,
+      limit: 10,
     });
 
     log("market results:", result.count);
 
     if (result.intents && result.intents.length > 0) {
-      for (const intent of result.intents) {
-        log("  found:", intent.description?.substring(0, 100));
-        // The intent author is the provider
-        const providerTag = intent.contactHandle || intent.agentNametag;
-        if (providerTag) {
-          log("  provider found:", providerTag);
-          return providerTag;
-        }
+      // Pick the most recent intent (last in the list, or highest score)
+      const intent = result.intents[result.intents.length - 1];
+      log("  found:", intent.description?.substring(0, 100));
+      const providerTag = intent.contactHandle || intent.agentNametag;
+      if (providerTag) {
+        log("  provider found:", providerTag);
+        return providerTag;
       }
     }
   } catch (err) {

@@ -1,6 +1,6 @@
 #!/bin/bash
 cd "$(dirname "$0")"
-rm -rf data
+# DON'T delete data — keep wallets persistent across runs
 
 echo "=== Starting Agent A (enricher) ==="
 npx tsx src/agent-a.ts > /tmp/agent-a.log 2>&1 &
