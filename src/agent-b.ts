@@ -12,7 +12,7 @@
 
 import { Sphere, getCoinIdBySymbol } from "@unicitylabs/sphere-sdk";
 import { createNodeProviders } from "@unicitylabs/sphere-sdk/impl/nodejs";
-import { createWalletApiProviders } from "@unicitylabs/sphere-sdk/impl/shared/wallet-api";
+import { createOwnStorageWalletApiProviders } from "@unicitylabs/sphere-sdk/impl/shared/wallet-api";
 import { AGENT_B, NETWORK, ORACLE_API_KEY, SERVICE } from "./shared.js";
 import type { ServiceResponse } from "./shared.js";
 
@@ -30,7 +30,7 @@ async function bootWallet() {
     oracle: { apiKey: ORACLE_API_KEY },
   });
 
-  const providers = createWalletApiProviders(base, {
+  const providers = createOwnStorageWalletApiProviders(base, {
     baseUrl: "https://wallet-api.unicity.network",
     network: "testnet2",
     deviceId: "agent-b-scout",
@@ -222,6 +222,10 @@ async function main() {
 
   const sphere = await bootWallet();
   await topUp(sphere);
+
+  // Wait for wallet-api to settle (avoid rate limiting)
+  log("waiting 10s for wallet-api to settle...");
+  await new Promise((r) => setTimeout(r, 10_000));
 
   // Step 1: Find a service provider on the market
   let provider = await searchMarket(sphere);

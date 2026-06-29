@@ -13,7 +13,7 @@
 
 import { Sphere, getCoinIdBySymbol } from "@unicitylabs/sphere-sdk";
 import { createNodeProviders } from "@unicitylabs/sphere-sdk/impl/nodejs";
-import { createWalletApiProviders } from "@unicitylabs/sphere-sdk/impl/shared/wallet-api";
+import { createOwnStorageWalletApiProviders } from "@unicitylabs/sphere-sdk/impl/shared/wallet-api";
 import { AGENT_A, NETWORK, ORACLE_API_KEY, SERVICE } from "./shared.js";
 import { enrich } from "./service.js";
 import type { ServiceRequest } from "./shared.js";
@@ -32,7 +32,7 @@ async function bootWallet() {
     oracle: { apiKey: ORACLE_API_KEY },
   });
 
-  const providers = createWalletApiProviders(base, {
+  const providers = createOwnStorageWalletApiProviders(base, {
     baseUrl: "https://wallet-api.unicity.network",
     network: "testnet2",
     deviceId: "agent-a-enricher",
