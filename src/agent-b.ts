@@ -36,14 +36,32 @@ async function bootWallet() {
     deviceId: "agent-b-scout",
   });
 
-  const { sphere, created, generatedMnemonic } = await Sphere.init({
-    ...providers,
-    autoGenerate: true,
-    nametag: AGENT_B.nametag,
-  });
-
-  if (created && generatedMnemonic) {
-    log("NEW WALLET — save this mnemonic:", generatedMnemonic);
+  let sphere: Sphere;
+  try {
+    const result = await Sphere.init({
+      ...providers,
+      autoGenerate: true,
+      nametag: "scout-v2",
+      network: "testnet2",
+      market: true,
+    });
+    sphere = result.sphere;
+    if (result.created && result.generatedMnemonic) {
+      log("NEW WALLET — save this mnemonic:", result.generatedMnemonic);
+    }
+  } catch (err: any) {
+    if (err.code === "VALIDATION_ERROR" && err.message?.includes("Unicity ID") || err.message?.includes("nametag")) {
+      log("nametag already taken, loading existing wallet...");
+      const result = await Sphere.init({
+        ...providers,
+        autoGenerate: true,
+        network: "testnet2",
+        market: true,
+      });
+      sphere = result.sphere;
+    } else {
+      throw err;
+    }
   }
 
   log("wallet ready");
@@ -59,7 +77,7 @@ async function topUp(sphere: Sphere) {
   try {
     const coinId = getCoinIdBySymbol(SERVICE.coin);
     if (coinId) {
-      const result = await sphere.payments.mintFungibleToken(coinId, 5000n);
+      const result = await sphere.payments.mintFungibleToken(coinId, 10000000n);
       log("mint result:", result.success ? "ok" : result.error);
     }
   } catch (err) {
@@ -114,16 +132,34 @@ async function requestService(
   log(`  task: ${task}`);
   log(`  payment: ${SERVICE.price} ${SERVICE.coin}`);
 
-  const result = await sphere.payments.send({
-    recipient: `@${providerNametag}`,
-    amount: SERVICE.price,
-    coinId: SERVICE.coin,
-    memo: paymentMemo,
-  });
+  // Check balance first — v2 minted tokens may need a moment to settle
+  const assets = await sphere.payments.getAssets();
+  const uctAsset = assets.find((a) => a.symbol === SERVICE.coin);
+  log("  balance:", uctAsset?.totalAmount || "0", SERVICE.coin);
 
-  log("payment sent:", result.status);
-  if (result.deliveryPending) {
-    log("  (delivery pending — this is normal)");
+  if (!uctAsset || BigInt(uctAsset.totalAmount) < BigInt(SERVICE.price)) {
+    log("  insufficient balance, waiting 10s for minted tokens to settle...");
+    await new Promise((r) => setTimeout(r, 10_000));
+    const retryAssets = await sphere.payments.getAssets();
+    const retryUct = retryAssets.find((a) => a.symbol === SERVICE.coin);
+    log("  retry balance:", retryUct?.totalAmount || "0", SERVICE.coin);
+  }
+
+  try {
+    const result = await sphere.payments.send({
+      recipient: `@${providerNametag}`,
+      amount: SERVICE.price,
+      coinId: SERVICE.coin,
+      memo: paymentMemo,
+    });
+
+    log("payment sent:", result.status);
+    if (result.deliveryPending) {
+      log("  (delivery pending — this is normal)");
+    }
+  } catch (err: any) {
+    log("payment failed:", err.code || err.message);
+    log("  (service request still sent via memo, provider will see it)");
   }
 }
 

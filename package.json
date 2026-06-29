@@ -10,14 +10,22 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": ["unicity", "agent", "autonomous", "sphere", "astrid"],
+  "keywords": [
+    "unicity",
+    "agent",
+    "autonomous",
+    "sphere",
+    "astrid"
+  ],
   "license": "MIT",
   "dependencies": {
     "@unicitylabs/sphere-sdk": "latest",
-    "dotenv": "^16.4.0"
+    "dotenv": "^16.4.0",
+    "ws": "^8.21.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@types/ws": "^8.18.1",
     "tsx": "^4.0.0",
     "typescript": "^5.2.0"
   }

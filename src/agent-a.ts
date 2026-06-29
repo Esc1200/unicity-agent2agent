@@ -38,14 +38,33 @@ async function bootWallet() {
     deviceId: "agent-a-enricher",
   });
 
-  const { sphere, created, generatedMnemonic } = await Sphere.init({
-    ...providers,
-    autoGenerate: true,
-    nametag: AGENT_A.nametag,
-  });
-
-  if (created && generatedMnemonic) {
-    log("NEW WALLET — save this mnemonic:", generatedMnemonic);
+  // Skip nametag if already registered — it's first-come-first-served on Nostr
+  let sphere: Sphere;
+  try {
+    const result = await Sphere.init({
+      ...providers,
+      autoGenerate: true,
+      nametag: "enricher-v2",
+      network: "testnet2",
+      market: true,
+    });
+    sphere = result.sphere;
+    if (result.created && result.generatedMnemonic) {
+      log("NEW WALLET — save this mnemonic:", result.generatedMnemonic);
+    }
+  } catch (err: any) {
+    if (err.code === "VALIDATION_ERROR" && err.message?.includes("Unicity ID") || err.message?.includes("nametag")) {
+      log("nametag already taken, loading existing wallet...");
+      const result = await Sphere.init({
+        ...providers,
+        autoGenerate: true,
+        network: "testnet2",
+        market: true,
+      });
+      sphere = result.sphere;
+    } else {
+      throw err;
+    }
   }
 
   log("wallet ready");
