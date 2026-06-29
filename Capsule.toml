@@ -1,0 +1,13 @@
+[package]
+name = "agent2agent-enricher"
+version = "0.1.0"
+
+[[component]]
+id = "agent2agent-enricher"
+file = "agent2agent-enricher.wasm"
+type = "executable"
+
+[capabilities]
+ipc_publish = ["tool.v1.execute.*"]
+kv = ["*"]
+http = ["gateway.testnet2.unicity.network", "wallet-api.unicity.network", "nostr-relay.testnet.unicity.network"]

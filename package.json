@@ -1,0 +1,24 @@
+{
+  "name": "unicity-agent2agent",
+  "version": "0.1.0",
+  "description": "Agent-to-agent service on Unicity testnet2. Two autonomous agents: one offers data enrichment, the other discovers and pays for it. No human in the loop.",
+  "type": "module",
+  "scripts": {
+    "agent-a": "tsx src/agent-a.ts",
+    "agent-b": "tsx src/agent-b.ts",
+    "demo": "npm run agent-a & sleep 3 && npm run agent-b",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["unicity", "agent", "autonomous", "sphere", "astrid"],
+  "license": "MIT",
+  "dependencies": {
+    "@unicitylabs/sphere-sdk": "latest",
+    "dotenv": "^16.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.2.0"
+  }
+}
