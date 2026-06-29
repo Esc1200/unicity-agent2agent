@@ -86,6 +86,18 @@ async function topUp(sphere: Sphere) {
 }
 
 async function searchMarket(sphere: Sphere): Promise<string | null> {
+  // First: try local discovery file (written by Agent A)
+  try {
+    const fs = await import("fs");
+    const discovery = JSON.parse(fs.readFileSync("./data/provider-discovery.json", "utf-8"));
+    if (discovery.address) {
+      log("  discovered provider via local file:", discovery.address);
+      return discovery.address;
+    }
+  } catch {
+    // No discovery file — fall through to market search
+  }
+
   log("searching intent market for data-enricher...");
 
   try {
@@ -95,8 +107,6 @@ async function searchMarket(sphere: Sphere): Promise<string | null> {
       return null;
     }
 
-    // Search for the most recent "data-enricher" intent
-    // The market returns results sorted by relevance, we want the latest
     const result = await market.search("data-enricher", {
       limit: 10,
     });
@@ -104,13 +114,25 @@ async function searchMarket(sphere: Sphere): Promise<string | null> {
     log("market results:", result.count);
 
     if (result.intents && result.intents.length > 0) {
-      // Pick the most recent intent (last in the list, or highest score)
-      const intent = result.intents[result.intents.length - 1];
-      log("  found:", intent.description?.substring(0, 100));
-      const providerTag = intent.contactHandle || intent.agentNametag;
-      if (providerTag) {
-        log("  provider found:", providerTag);
-        return providerTag;
+      // Find the most recent intent with an address
+      for (let i = result.intents.length - 1; i >= 0; i--) {
+        const intent = result.intents[i];
+        try {
+          const parsed = JSON.parse(intent.description || "{}");
+          if (parsed.service === "data-enricher" && parsed.address) {
+            log("  found provider:", parsed.address);
+            return parsed.address;
+          }
+        } catch {
+          // not JSON
+        }
+      }
+      // Fallback: use contactHandle (nametag)
+      const fallback = result.intents[result.intents.length - 1];
+      const tag = fallback.contactHandle || fallback.agentNametag;
+      if (tag) {
+        log("  fallback provider:", tag);
+        return `@${tag}`;
       }
     }
   } catch (err) {
@@ -122,14 +144,14 @@ async function searchMarket(sphere: Sphere): Promise<string | null> {
 
 async function requestService(
   sphere: Sphere,
-  providerNametag: string,
+  providerAddress: string,
   task: string,
   data: Record<string, unknown>
 ): Promise<void> {
   const request = { task, data };
   const paymentMemo = JSON.stringify(request);
 
-  log(`sending service request to @${providerNametag}...`);
+  log(`sending service request to ${providerAddress}...`);
   log(`  task: ${task}`);
   log(`  payment: ${SERVICE.price} ${SERVICE.coin}`);
 
@@ -148,7 +170,7 @@ async function requestService(
 
   try {
     const result = await sphere.payments.send({
-      recipient: `@${providerNametag}`,
+      recipient: providerAddress,
       amount: SERVICE.price,
       coinId: SERVICE.coin,
       memo: paymentMemo,
@@ -202,15 +224,17 @@ async function main() {
   await topUp(sphere);
 
   // Step 1: Find a service provider on the market
-  let providerTag = await searchMarket(sphere);
+  let provider = await searchMarket(sphere);
 
-  if (!providerTag) {
-    log("no provider found on market, using default: @enricher");
-    providerTag = "@enricher";
+  if (!provider) {
+    log("no provider found on market");
+    return;
   }
 
+  log("sending to provider:", provider);
+
   // Step 2: Send a service request with payment
-  await requestService(sphere, providerTag, "lookup", {
+  await requestService(sphere, provider, "lookup", {
     query: "Unicity testnet status",
     context: "autonomous agent discovery test",
   });

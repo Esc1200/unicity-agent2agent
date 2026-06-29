@@ -93,6 +93,8 @@ async function publishServiceIntent(sphere: Sphere) {
         coin: SERVICE.coin,
         description:
           "Autonomous data enrichment agent. Send a task via DM with payment. I enrich and return.",
+        address: sphere.identity?.directAddress,
+        pubkey: sphere.identity?.chainPubkey,
       }),
       intentType: "service",
       category: "data-enrichment",
@@ -100,6 +102,18 @@ async function publishServiceIntent(sphere: Sphere) {
     });
 
     log("intent published:", result.intentId);
+
+    // Write provider address to shared file for local discovery
+    const fs = await import("fs");
+    const discovery = {
+      address: sphere.identity?.directAddress,
+      pubkey: sphere.identity?.chainPubkey,
+      nametag: sphere.identity?.nametag,
+      intentId: result.intentId,
+      timestamp: new Date().toISOString(),
+    };
+    fs.writeFileSync("./data/provider-discovery.json", JSON.stringify(discovery, null, 2));
+    log("provider discovery written to data/provider-discovery.json");
   } catch (err) {
     log("intent publish failed (non-fatal):", err);
   }
