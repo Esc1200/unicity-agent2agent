@@ -1,5 +1,6 @@
 import { Sphere, getCoinIdBySymbol } from "@unicitylabs/sphere-sdk";
 import { createNodeProviders } from "@unicitylabs/sphere-sdk/impl/nodejs";
+import { createWalletApiProviders } from "@unicitylabs/sphere-sdk/impl/shared/wallet-api";
 import { AGENT_A, NETWORK, ORACLE_API_KEY, SERVICE } from "./shared.js";
 import { enrich } from "./service.js";
 import type { ServiceRequest } from "./shared.js";

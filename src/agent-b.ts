@@ -1,5 +1,6 @@
 import { Sphere, getCoinIdBySymbol } from "@unicitylabs/sphere-sdk";
 import { createNodeProviders } from "@unicitylabs/sphere-sdk/impl/nodejs";
+import { createWalletApiProviders } from "@unicitylabs/sphere-sdk/impl/shared/wallet-api";
 import { AGENT_B, NETWORK, ORACLE_API_KEY, SERVICE } from "./shared.js";
 import type { ServiceResponse } from "./shared.js";
 import * as fs from "fs";
@@ -15,7 +16,7 @@ async function main() {
     network: NETWORK,
     dataDir: "./data/agent-b/data",
     tokensDir: "./data/agent-b/tokens",
-    oracle: { apiKey: *** },
+    oracle: { apiKey: ORACLE_API_KEY },
     market: true,
   });
 
